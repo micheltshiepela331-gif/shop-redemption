@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shop Rédemption — Journal de caisse</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0E5A43">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1EC; --surface:#FFFFFF; --ink:#1A2620; --muted:#5E6B63; --line:#D5DCD6;
+  --mala:#0E5A43; --mala-soft:#DCEBE4; --copper:#B5652B; --copper-soft:#F4E4D7; --loss:#B3261E;
+  --hero-ink:#FFFFFF; --field:#F6F8F5;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101814; --surface:#18231D; --ink:#E7EEE9; --muted:#93A39A; --line:#2A3730;
+    --mala:#2E8F6C; --mala-soft:#1E3A2F; --copper:#E08A4C; --copper-soft:#3A2A1E; --loss:#FF8A80;
+    --hero-ink:#FFFFFF; --field:#1F2B24;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101814; --surface:#18231D; --ink:#E7EEE9; --muted:#93A39A; --line:#2A3730;
+  --mala:#2E8F6C; --mala-soft:#1E3A2F; --copper:#E08A4C; --copper-soft:#3A2A1E; --loss:#FF8A80;
+  --hero-ink:#FFFFFF; --field:#1F2B24;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%; scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0; min-height:100%; background:var(--bg); color:var(--ink);
+  font-family:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; font-size:16px; line-height:1.4}
+.num,.big,input.n{font-family:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif; font-variant-numeric:tabular-nums}
+button{font:inherit; color:inherit; cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--copper); outline-offset:2px}
+
+.top{position:sticky; top:env(safe-area-inset-top,0px); z-index:5; background:var(--bg);
+  border-bottom:1px solid var(--line); padding:10px 14px}
+.top-row{display:flex; align-items:center; gap:8px; max-width:640px; margin:0 auto}
+.shop{font-family:"Barlow Semi Condensed",sans-serif; font-weight:700; font-size:1.05rem; color:var(--mala); flex:1}
+.status{font-size:.8rem; color:var(--muted)}
+.daynav{display:flex; align-items:center; gap:6px; max-width:640px; margin:8px auto 0}
+.daynav .arrow{width:40px; height:40px; border-radius:10px; border:1px solid var(--line); background:var(--surface); font-size:1.2rem}
+.daynav .arrow:disabled{opacity:.35; cursor:default}
+.daylabel{flex:1; text-align:center; font-weight:600; text-transform:capitalize}
+
+main{max-width:640px; margin:0 auto; padding:14px 14px 96px}
+
+.hero{background:var(--mala); color:var(--hero-ink); border-radius:18px; padding:18px 18px 16px; margin-bottom:16px}
+.hero .lbl{font-size:.9rem; opacity:.85}
+.hero .big{font-size:2.6rem; font-weight:700; line-height:1.05; margin:2px 0 2px}
+.hero .usd{font-size:1.05rem; opacity:.9}
+.hero.loss .big{color:#FFD5CF}
+.hero-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px 16px; margin-top:14px; padding-top:12px; border-top:1px solid rgba(255,255,255,.22)}
+.hero-grid div{font-size:.85rem; opacity:.85}
+.hero-grid b{display:block; font-family:"Barlow Semi Condensed",sans-serif; font-size:1.15rem; font-weight:600; opacity:1}
+
+section.block{background:var(--surface); border:1px solid var(--line); border-radius:14px; margin-bottom:14px; overflow:hidden}
+.block-head{display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding:12px 14px 8px}
+.block-head h2{margin:0; font-family:"Barlow Semi Condensed",sans-serif; font-size:1.15rem; font-weight:700}
+.block-head .num{font-weight:600; font-size:1.1rem; color:var(--mala)}
+.hint{padding:0 14px 8px; font-size:.82rem; color:var(--muted)}
+
+.row{display:grid; gap:8px; padding:10px 14px; border-top:1px solid var(--line); align-items:end}
+.row.mm{grid-template-columns:1fr 1fr}
+.row.un{grid-template-columns:1fr 1fr}
+.row .name{grid-column:1/-1; display:flex; align-items:center; gap:8px}
+.row .name input{flex:1; border:none; background:transparent; font-weight:600; font-size:1rem; padding:2px 0; color:var(--ink); min-width:0}
+.row .name input:focus{border-bottom:1px solid var(--copper); outline:none}
+.row .del{border:none; background:none; color:var(--muted); font-size:1.1rem; width:32px; height:32px; border-radius:8px}
+.row .out{grid-column:1/-1; display:flex; justify-content:space-between; font-size:.9rem; color:var(--muted)}
+.row .out .num{color:var(--ink); font-weight:600; font-size:1rem}
+label.f{display:flex; flex-direction:column; gap:3px; font-size:.78rem; color:var(--muted)}
+input.n,input.t{width:100%; border:1px solid var(--line); background:var(--field); color:var(--ink);
+  border-radius:10px; padding:10px 10px; font-size:1.1rem; min-width:0}
+input.t{font-family:inherit; font-size:1rem}
+.add{display:block; width:100%; border:none; border-top:1px dashed var(--line); background:none; color:var(--copper);
+  font-weight:600; padding:12px 14px; text-align:left}
+
+.cmp{display:grid; grid-template-columns:1fr auto; gap:6px 12px; padding:12px 14px; border-top:1px solid var(--line); font-size:.95rem}
+.cmp .num{text-align:right; font-weight:600}
+.cmp .strong{font-weight:700}
+.pos{color:var(--mala)} .neg{color:var(--loss)}
+.auto{font-size:.75rem; color:var(--copper); margin-left:4px}
+
+.tabs{position:fixed; left:0; right:0; bottom:0; z-index:6; background:var(--surface); border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs-in{display:flex; max-width:640px; margin:0 auto}
+.tabs button{flex:1; border:none; background:none; padding:12px 4px 14px; font-weight:600; color:var(--muted); font-size:.95rem}
+.tabs button[aria-current="page"]{color:var(--mala); box-shadow:inset 0 3px 0 var(--copper)}
+
+.primary{display:block; width:100%; border:none; border-radius:12px; background:var(--copper); color:#fff; font-weight:700;
+  padding:14px; font-size:1.02rem; margin:0 0 14px}
+.ghost{border:1px solid var(--line); background:var(--surface); border-radius:10px; padding:10px 14px; font-weight:600}
+.danger{color:var(--loss)}
+
+.hist{list-style:none; margin:0; padding:0}
+.hist li{border-top:1px solid var(--line)}
+.hist li:first-child{border-top:none}
+.hist button{width:100%; display:grid; grid-template-columns:1fr auto; gap:2px 12px; text-align:left; border:none; background:none; padding:12px 14px}
+.hist .d{font-weight:600; text-transform:capitalize}
+.hist .s{font-size:.85rem; color:var(--muted)}
+.hist .g{text-align:right; font-family:"Barlow Semi Condensed",sans-serif; font-weight:700; font-size:1.1rem}
+.chart{padding:8px 14px 14px; overflow-x:auto}
+.chart svg{display:block; width:100%; height:120px}
+.curve svg{display:block; width:100%; height:150px}
+.curve .lg{display:flex; gap:14px; flex-wrap:wrap; font-size:.8rem; color:var(--muted); padding:6px 0 0}
+.curve .lg i{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; vertical-align:-1px}
+.alerte{border-radius:14px; padding:12px 14px; margin-bottom:14px; font-size:.95rem; line-height:1.35;
+  background:color-mix(in srgb, var(--loss) 12%, var(--surface)); border:1px solid var(--loss); color:var(--ink)}
+.alerte b{color:var(--loss)}
+.okmsg{border-radius:14px; padding:10px 14px; margin-bottom:14px; font-size:.9rem; background:var(--mala-soft); color:var(--ink)}
+
+.sheet-bg{position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:20; display:flex; align-items:flex-end; justify-content:center}
+.sheet{background:var(--surface); width:100%; max-width:640px; border-radius:18px 18px 0 0; padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+.sheet h3{margin:0 0 6px; font-family:"Barlow Semi Condensed",sans-serif; font-size:1.3rem}
+.sheet p{margin:0 0 14px; color:var(--muted); font-size:.92rem}
+.sheet .btns{display:flex; gap:10px; margin-top:16px}
+.sheet .btns>*{flex:1; margin:0}
+.empty{text-align:center; padding:40px 10px}
+.empty h2{font-family:"Barlow Semi Condensed",sans-serif; font-size:1.6rem; margin:0 0 6px; color:var(--mala)}
+.empty p{color:var(--muted); margin:0 0 20px}
+.prog{height:12px; border-radius:6px; background:rgba(255,255,255,.22); overflow:hidden; margin-top:12px}
+.prog span{display:block; height:100%; background:var(--copper); border-radius:6px; transition:width .2s}
+.hero .prog-t{font-size:.85rem; opacity:.9; margin-top:6px}
+.retour{border-top:1px solid var(--line); padding:12px 14px; font-size:.92rem}
+.set{display:grid; gap:12px; padding:12px 14px 16px; border-top:1px solid var(--line)}
+@media (prefers-reduced-motion:no-preference){ .hero .big{transition:color .2s} }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-row"><div class="shop">Shop Rédemption</div><div class="status" id="status"></div></div>
+  <div class="daynav" id="daynav">
+    <button class="arrow" id="prev" aria-label="Jour précédent">‹</button>
+    <div class="daylabel" id="daylabel">—</div>
+    <button class="arrow" id="next" aria-label="Jour suivant">›</button>
+  </div>
+</header>
+<main id="main"></main>
+<nav class="tabs"><div class="tabs-in">
+  <button data-tab="jour" aria-current="page">Journée</button>
+  <button data-tab="change">Change</button>
+  <button data-tab="hist">Historique</button>
+  <button data-tab="regl">Réglages</button>
+</div></nav>
+
+<script>
+(function(){
+"use strict";
+// ---------- Données par défaut ----------
+const DEF_TAUX = 2300;
+const DEF_ACHAT = 2280;   // taux auquel on achète les dollars aux clients
+const DEF_OBJ = 1000;     // objectif : dollars achetés par jour
+const DEF_MM = ["Airtel Money","Orange Money","M-Pesa"];
+// Supprime les doubles « Airtel Money (2) » et « Orange Money (2) » des journées déjà enregistrées.
+// Si un double contenait des montants, ils sont ajoutés à la ligne principale pour ne rien perdre.
+function nettoyerDoubles(){
+  const changes = [];
+  for(const k of Object.keys(days)){
+    const d = days[k]; if(!d || !Array.isArray(d.mm)) continue;
+    let modif = false;
+    for(const base of ["Airtel Money","Orange Money"]){
+      const iDbl = d.mm.findIndex(r=> r && String(r.label).trim()===base+" (2)");
+      if(iDbl<0) continue;
+      const dbl = d.mm[iDbl];
+      const main = d.mm.find(r=> r && String(r.label).trim()===base);
+      if(main){
+        main.fc = n(main.fc) + n(dbl.fc);
+        main.usd = n(main.usd) + n(dbl.usd);
+        d.mm.splice(iDbl,1);
+      } else {
+        dbl.label = base;
+      }
+      modif = true;
+    }
+    if(Array.isArray(d.un)){
+      for(const base of ["Unités Airtel","Unités Orange"]){
+        const iDbl = d.un.findIndex(r=> r && String(r.label).trim()===base+" (2)");
+        if(iDbl<0) continue;
+        const dbl = d.un[iDbl];
+        const main = d.un.find(r=> r && String(r.label).trim()===base);
+        if(main){ main.qte = n(main.qte) + n(dbl.qte); d.un.splice(iDbl,1); }
+        else dbl.label = base;
+        modif = true;
+      }
+      if(!d.africellAjoute){
+        if(!d.un.some(r=> r && /africell/i.test(String(r.label)))) d.un.push({label:"Unités Africell", qte:0, prix:28.4});
+        d.africellAjoute = true; modif = true;
+      }
+    }
+    if(modif) changes.push(k);
+  }
+  return changes;
+}
+const DEF_UN = [["Unités Airtel",28.4],["Unités Orange",28.4],["Unités Vodacom",2840],["Unités Africell",28.4]];
+
+function blankDay(date){
+  return { date, taux:DEF_TAUX,
+    mm: DEF_MM.map(l=>({label:l, fc:0, usd:0})),
+    un: DEF_UN.map(([l,p])=>({label:l, qte:0, prix:p})),
+    esp:{fc:0, usd:0, commission:0},
+    dettes:[], depenses:[], soldeHier:null,
+    change:{tauxAchat:DEF_ACHAT, objectif:DEF_OBJ, achats:[], ventes:[]} };
+}
+
+// ---------- Stockage (db du compte, sinon navigateur) ----------
+const LS = "shopKisangala.v1";
+let dbJours = null, days = {}, mode = "local";
+function lsLoad(){ try{ return JSON.parse(localStorage.getItem(LS)||"{}") }catch(e){ return {} } }
+function lsSave(){ try{ localStorage.setItem(LS, JSON.stringify(days)) }catch(e){} }
+
+async function initStore(){
+  days = lsLoad();
+  try{
+    if(!window.claude || !window.claude.use) return;
+    const db = await window.claude.use("db");
+    if(!db) return;
+    const user = await window.claude.use("user");
+    const uid = user ? await user.id() : null;
+    if(!uid) return;
+    dbJours = db.doc("data/users/"+uid+"/shop").collection("jours");
+    const snap = await dbJours.limit(1000).get();
+    const remote = {};
+    snap.docs.forEach(d=>{ const v=d.data(); if(v && v.date) remote[v.date]=JSON.parse(JSON.stringify(v)); });
+    // reprendre les journées gardées seulement dans ce téléphone
+    for(const k of Object.keys(days)){ if(!remote[k]){ remote[k]=days[k]; try{ await dbJours.doc(k).set(days[k]); }catch(e){} } }
+    days = remote; mode = "compte"; lsSave();
+  }catch(e){ dbJours = null; }
+}
+
+const timers = {};
+let pending = 0;
+function scheduleSave(date){
+  lsSave();
+  setStatus("Modification…");
+  clearTimeout(timers[date]);
+  timers[date] = setTimeout(()=>persist(date), 800);
+}
+async function persist(date){
+  lsSave();
+  if(!dbJours){ setStatus("Enregistré dans ce téléphone"); return; }
+  pending++;
+  try{
+    if(days[date]) await dbJours.doc(date).set(days[date]);
+    else await dbJours.doc(date).delete();
+    setStatus("Enregistré");
+  }catch(e){
+    setStatus(e && e.code==="quota_exceeded" ? "Espace plein : supprimez d'anciennes journées" : "Gardé dans ce téléphone, envoi plus tard");
+  }finally{ pending--; }
+}
+function setStatus(t){ document.getElementById("status").textContent = t; }
+
+// ---------- Calculs ----------
+const n = v => { const x = typeof v==="number" ? v : parseFloat(String(v||"").replace(/\s/g,"").replace(",", ".")); return isFinite(x)?x:0; };
+const fmt = (v,dec=0) => (Math.round(v*Math.pow(10,dec))/Math.pow(10,dec)).toLocaleString("fr-FR",{minimumFractionDigits:0, maximumFractionDigits:dec}).replace(/\u202f|\u00a0/g," ");
+const fc = v => fmt(v) + " FC";
+const usd = v => fmt(v,2) + " $";
+const sortedDates = () => Object.keys(days).sort();
+function prevDate(date){ const a = sortedDates().filter(d=>d<date); return a.length ? a[a.length-1] : null; }
+
+function chg(d){
+  if(!d.change) d.change = {tauxAchat:DEF_ACHAT, objectif:DEF_OBJ, achats:[], ventes:[]};
+  const c = d.change; if(!Array.isArray(c.achats)) c.achats=[]; if(!Array.isArray(c.ventes)) c.ventes=[];
+  return c;
+}
+// Calculs de la page Change pour une journée
+function calcChange(d){
+  const c = chg(d);
+  const tR = n(d.taux)||DEF_TAUX;            // taux de revente = taux du dollar de la journée
+  const tA = n(c.tauxAchat)||DEF_ACHAT;      // taux d'achat aux clients
+  const obj = n(c.objectif)||DEF_OBJ;
+  const ach = c.achats.map(r=>{ const u=n(r.usd), t=n(r.taux)||tA; return {u, t, fcDonne:u*t, benef:u*(tR-t)}; });
+  const ven = c.ventes.map(r=>{ const u=n(r.usd), t=n(r.taux)||tR; return {u, t, fcRecu:u*t, ecart:u*(t-tR)}; });
+  const usdAch = ach.reduce((a,r)=>a+r.u,0), usdVen = ven.reduce((a,r)=>a+r.u,0);
+  const fcDonne = ach.reduce((a,r)=>a+r.fcDonne,0), fcRecu = ven.reduce((a,r)=>a+r.fcRecu,0);
+  const benefAch = ach.reduce((a,r)=>a+r.benef,0), ecartVen = ven.reduce((a,r)=>a+r.ecart,0);
+  return {tR, tA, obj, ach, ven, usdAch, usdVen, fcDonne, fcRecu, benefAch, ecartVen, benef: benefAch+ecartVen,
+          objBenef: obj*(tR-tA), pct: Math.min(100, obj ? usdAch/obj*100 : 0)};
+}
+// Dollars accumulés (achetés moins vendus) depuis le début, jusqu'à la date donnée
+function stockDollars(jusqua){
+  let s=0; for(const k of sortedDates()){ if(k>jusqua) break; const x=calcChange(days[k]); s += x.usdAch - x.usdVen; } return s;
+}
+
+function calc(d){
+  const t = n(d.taux)||DEF_TAUX;
+  const mmRows = d.mm.map(r=> n(r.fc) + n(r.usd)*t);
+  const unRows = d.un.map(r=> n(r.qte)*n(r.prix));
+  const mm = mmRows.reduce((a,b)=>a+b,0);
+  const un = unRows.reduce((a,b)=>a+b,0);
+  const espBase = n(d.esp.fc) + n(d.esp.usd)*t;
+  const esp = espBase + n(d.esp.commission);
+  const dettes = d.dettes.reduce((a,r)=>a+n(r.montant),0);
+  const dep = d.depenses.reduce((a,r)=>a+n(r.montant),0);
+  const total = mm + un + esp + dettes;
+  const p = prevDate(d.date);
+  const autoHier = p ? calc(days[p]).total : null;
+  const hierManuel = d.soldeHier!==null && d.soldeHier!==undefined && d.soldeHier!=="";
+  const hier = hierManuel ? n(d.soldeHier) : (autoHier||0);
+  const gain = total - hier;
+  return {t, mmRows, unRows, mm, un, espBase, esp, dettes, dep, total, hier, hierManuel, autoHier, gain, gainAvant: gain + dep};
+}
+
+// ---------- État de l'écran ----------
+let tab = "jour", cur = null;
+const main = document.getElementById("main");
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const iv = v => (v===0||v==="0"||v==null) ? "" : esc(v);
+function longDate(s){ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d).toLocaleDateString("fr-FR",{weekday:"long", day:"numeric", month:"long", year:"numeric"}); }
+function shortDate(s){ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d).toLocaleDateString("fr-FR",{weekday:"short", day:"numeric", month:"short"}); }
+function today(){ const x=new Date(); return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0"); }
+
+// Fuite = argent qui manque sans être expliqué par les dépenses (gain avant dépenses négatif)
+function fuiteDe(c){ return c.gainAvant < 0 ? -c.gainAvant : 0; }
+function courbeGain(jusqua, nb){
+  const all = sortedDates().filter(d=> !jusqua || d<=jusqua).slice(-nb);
+  if(all.length<2) return `<div class="hint" style="padding:0 0 4px">La courbe apparaîtra dès qu'il y aura au moins deux journées.</div>`;
+  const pts = all.map(dt=>{ const c=calc(days[dt]); return {dt, g:c.gain, f:fuiteDe(c)}; });
+  const W=Math.max(320, pts.length*34), H=150, padY=14, padX=10;
+  const vals = pts.map(p=>p.g), mx=Math.max(0,...vals), mn=Math.min(0,...vals), rg=(mx-mn)||1;
+  const X=i=> padX + i*(W-2*padX)/(pts.length-1);
+  const Y=v=> padY + (mx-v)*(H-2*padY)/rg;
+  const line = pts.map((p,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(p.g).toFixed(1)).join(" ");
+  const area = line + ` L${X(pts.length-1).toFixed(1)} ${Y(0).toFixed(1)} L${X(0).toFixed(1)} ${Y(0).toFixed(1)} Z`;
+  const dots = pts.map((p,i)=>{
+    const col = p.f>0 ? "var(--loss)" : (p.g<0 ? "var(--copper)" : "var(--mala)");
+    const r = p.f>0 ? 6 : 4;
+    const tip = shortDate(p.dt)+" : "+(p.g>0?"+":"")+fc(p.g)+(p.f>0?" — fuite "+fc(p.f):"");
+    return `<circle cx="${X(i).toFixed(1)}" cy="${Y(p.g).toFixed(1)}" r="${r}" fill="${col}" stroke="var(--surface)" stroke-width="2"><title>${esc(tip)}</title></circle>`;
+  }).join("");
+  const nbF = pts.filter(p=>p.f>0).length;
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Courbe du gain des dernières journées">
+    <line x1="0" x2="${W}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--line)" stroke-dasharray="4 4"/>
+    <path d="${area}" fill="var(--mala)" opacity=".10"/>
+    <path d="${line}" fill="none" stroke="var(--mala)" stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+    ${dots}</svg>
+    <div class="lg"><span><i style="background:var(--mala)"></i>Gain</span><span><i style="background:var(--copper)"></i>Baisse expliquée par les dépenses</span><span><i style="background:var(--loss)"></i>Fuite d'argent</span></div>
+    ${nbF?`<div class="hint" style="padding:6px 0 0">${nbF} journée${nbF>1?"s":""} avec fuite sur cette courbe. Touchez un point pour voir le détail.</div>`:""}`;
+}
+
+function renderNav(){
+  const all = sortedDates(), i = all.indexOf(cur);
+  document.getElementById("daylabel").textContent = cur ? longDate(cur) : "Aucune journée";
+  document.getElementById("prev").disabled = !(i>0);
+  document.getElementById("next").disabled = !(i>=0 && i<all.length-1);
+  document.getElementById("daynav").style.display = (tab==="jour"||tab==="change") ? "" : "none";
+  document.querySelectorAll(".tabs button").forEach(b=> b.setAttribute("aria-current", b.dataset.tab===tab?"page":"false"));
+}
+
+function render(){
+  renderNav();
+  if(tab==="hist") return renderHist();
+  if(tab==="change") return renderChange();
+  if(tab==="regl") return renderRegl();
+  if(!cur){
+    main.innerHTML = `<div class="empty"><h2>Première journée</h2><p>Créez la grille du jour. Ensuite, chaque nouveau jour reprendra la grille de la veille : il suffira de remplacer les chiffres.</p><button class="primary" data-act="newday">Commencer une journée</button></div>`;
+    return;
+  }
+  const d = days[cur];
+  main.innerHTML = `
+  <button class="primary" data-act="newday">Nouvelle journée (copier cette grille)</button>
+  <div class="hero" id="hero">
+    <div class="lbl" id="h-lbl">Gain du jour</div>
+    <div class="big" id="h-gain">0 FC</div>
+    <div class="usd" id="h-gain-usd"></div>
+    <div class="hero-grid">
+      <div>Total général<b id="h-total"></b></div>
+      <div>Total en dollars<b id="h-total-usd"></b></div>
+      <div>Solde d'hier<b id="h-hier"></b></div>
+      <div>Gain avant dépenses<b id="h-avant"></b></div>
+    </div>
+  </div>
+  <div id="fuite"></div>
+
+  <section class="block">
+    <div class="block-head"><h2>Courbe du gain</h2><span class="hint" style="padding:0">14 dernières journées</span></div>
+    <div class="chart curve" id="courbe"></div>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>Monnaie électronique</h2><span class="num" id="t-mm"></span></div>
+    ${d.mm.map((r,i)=>`
+      <div class="row mm">
+        <div class="name"><input class="t-lbl" data-p="mm.${i}.label" value="${esc(r.label)}" aria-label="Nom du service"><button class="del" data-del="mm.${i}" aria-label="Supprimer la ligne">✕</button></div>
+        <label class="f">Montant FC<input class="n" inputmode="decimal" data-p="mm.${i}.fc" value="${iv(r.fc)}" placeholder="0"></label>
+        <label class="f">Montant $<input class="n" inputmode="decimal" data-p="mm.${i}.usd" value="${iv(r.usd)}" placeholder="0"></label>
+        <div class="out"><span>Total en FC</span><span class="num" id="mm-${i}"></span></div>
+      </div>`).join("")}
+    <button class="add" data-add="mm">+ Ajouter un service</button>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>Unités</h2><span class="num" id="t-un"></span></div>
+    <div class="hint">Nombre d'unités × prix d'une unité en FC</div>
+    ${d.un.map((r,i)=>`
+      <div class="row un">
+        <div class="name"><input class="t-lbl" data-p="un.${i}.label" value="${esc(r.label)}" aria-label="Nom du réseau"><button class="del" data-del="un.${i}" aria-label="Supprimer la ligne">✕</button></div>
+        <label class="f">Nombre d'unités<input class="n" inputmode="decimal" data-p="un.${i}.qte" value="${iv(r.qte)}" placeholder="0"></label>
+        <label class="f">Prix d'une unité (FC)<input class="n" inputmode="decimal" data-p="un.${i}.prix" value="${iv(r.prix)}" placeholder="0"></label>
+        <div class="out"><span>Valeur en FC</span><span class="num" id="un-${i}"></span></div>
+      </div>`).join("")}
+    <button class="add" data-add="un">+ Ajouter un réseau</button>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>Espèces</h2><span class="num" id="t-esp"></span></div>
+    <div class="row mm">
+      <label class="f">Francs (FC)<input class="n" inputmode="decimal" data-p="esp.fc" value="${iv(d.esp.fc)}" placeholder="0"></label>
+      <label class="f">Dollars ($)<input class="n" inputmode="decimal" data-p="esp.usd" value="${iv(d.esp.usd)}" placeholder="0"></label>
+      <label class="f" style="grid-column:1/-1">Commission (FC)<input class="n" inputmode="decimal" data-p="esp.commission" value="${iv(d.esp.commission)}" placeholder="0"></label>
+      <div class="out"><span>Espèces converties</span><span class="num" id="esp-base"></span></div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>Dettes des clients</h2><span class="num" id="t-dettes"></span></div>
+    <div class="hint">Argent que les clients vous doivent. Il compte dans le total général et passe au jour suivant.</div>
+    ${d.dettes.map((r,i)=>`
+      <div class="row mm">
+        <label class="f">Client<input class="t" data-p="dettes.${i}.client" value="${esc(r.client)}" placeholder="Nom"></label>
+        <label class="f">Montant FC<input class="n" inputmode="decimal" data-p="dettes.${i}.montant" value="${iv(r.montant)}" placeholder="0"></label>
+        <div class="out"><span></span><button class="del" data-del="dettes.${i}" aria-label="Retirer cette dette">✕</button></div>
+      </div>`).join("")}
+    <button class="add" data-add="dettes">+ Ajouter une dette</button>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>Dépenses du jour</h2><span class="num" id="t-dep"></span></div>
+    <div class="hint">Paiement travailleur, téléphone, transport… Elles expliquent la baisse de caisse.</div>
+    ${d.depenses.map((r,i)=>`
+      <div class="row mm">
+        <label class="f">Motif<input class="t" data-p="depenses.${i}.motif" value="${esc(r.motif)}" placeholder="Ex. travailleur"></label>
+        <label class="f">Montant FC<input class="n" inputmode="decimal" data-p="depenses.${i}.montant" value="${iv(r.montant)}" placeholder="0"></label>
+        <div class="out"><span></span><button class="del" data-del="depenses.${i}" aria-label="Retirer cette dépense">✕</button></div>
+      </div>`).join("")}
+    <button class="add" data-add="depenses">+ Ajouter une dépense</button>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>Bilan</h2></div>
+    <div class="row mm">
+      <label class="f">Taux du dollar (FC pour 1 $)<input class="n" inputmode="decimal" data-p="taux" value="${iv(d.taux)}" placeholder="2300"></label>
+      <label class="f">Solde d'hier (FC) <span id="hier-hint"></span><input class="n" inputmode="decimal" data-p="soldeHier" id="hier-in" value="${d.soldeHier==null?"":esc(d.soldeHier)}"></label>
+    </div>
+    <div class="cmp" id="bilan"></div>
+  </section>`;
+  update();
+}
+
+function update(){
+  if(tab==="change") return updateChange();
+  if(!cur || tab!=="jour") return;
+  const d = days[cur], c = calc(d), $ = id=>document.getElementById(id);
+  c.mmRows.forEach((v,i)=>{ const e=$("mm-"+i); if(e) e.textContent=fc(v); });
+  c.unRows.forEach((v,i)=>{ const e=$("un-"+i); if(e) e.textContent=fc(v); });
+  $("t-mm").textContent=fc(c.mm); $("t-un").textContent=fc(c.un); $("t-esp").textContent=fc(c.esp);
+  $("esp-base").textContent=fc(c.espBase);
+  $("t-dettes").textContent=fc(c.dettes); $("t-dep").textContent=fc(c.dep);
+  const g = c.gain;
+  $("hero").classList.toggle("loss", g<0);
+  $("h-lbl").textContent = g<0 ? "Perte du jour" : "Gain du jour";
+  $("h-gain").textContent = (g>0?"+":"") + fc(g);
+  $("h-gain-usd").textContent = (g>0?"+":"") + usd(g/c.t);
+  $("h-total").textContent = fc(c.total);
+  $("h-total-usd").textContent = usd(c.total/c.t);
+  $("h-hier").textContent = fc(c.hier);
+  $("h-avant").textContent = (c.gainAvant>0?"+":"") + fc(c.gainAvant);
+  const f = fuiteDe(c), z = $("fuite");
+  if(z){
+    if(!c.autoHier && !c.hierManuel) z.innerHTML = "";
+    else if(f>0) z.innerHTML = `<div class="alerte"><b>Fuite détectée : ${fc(f)} manquent</b> (${usd(f/c.t)}).<br>La caisse a baissé plus que les dépenses notées. Vérifiez les espèces, les dettes et les dépenses oubliées.</div>`;
+    else z.innerHTML = `<div class="okmsg">Pas de fuite aujourd'hui : la caisse est cohérente avec les dépenses.</div>`;
+  }
+  const cb = $("courbe"); if(cb) cb.innerHTML = courbeGain(cur, 14);
+  const hin = $("hier-in");
+  if(hin && document.activeElement!==hin) hin.placeholder = c.autoHier!=null ? fmt(c.autoHier) : "0";
+  $("hier-hint").innerHTML = c.hierManuel ? "" : (c.autoHier!=null ? '<span class="auto">(automatique)</span>' : "");
+  $("bilan").innerHTML = `
+    <span>Monnaie électronique</span><span class="num">${fc(c.mm)}</span>
+    <span>Unités</span><span class="num">${fc(c.un)}</span>
+    <span>Espèces + commission</span><span class="num">${fc(c.esp)}</span>
+    <span>Dettes des clients</span><span class="num">${fc(c.dettes)}</span>
+    <span class="strong">Total général</span><span class="num strong">${fc(c.total)}</span>
+    <span>Moins solde d'hier</span><span class="num">− ${fc(c.hier)}</span>
+    <span class="strong">${c.gain<0?"Perte":"Gain"}</span><span class="num strong ${c.gain<0?"neg":"pos"}">${(c.gain>0?"+":"")+fc(c.gain)} · ${usd(c.gain/c.t)}</span>
+    <span>Bénéfice du change (page Change)</span><span class="num">${(calcChange(d).benef>0?"+":"")+fc(calcChange(d).benef)}</span>
+    <span>Dépenses du jour</span><span class="num">${fc(c.dep)}</span>
+    <span>Gain avant dépenses</span><span class="num ${c.gainAvant<0?"neg":"pos"}">${(c.gainAvant>0?"+":"")+fc(c.gainAvant)}</span>`;
+}
+
+function renderChange(){
+  if(!cur){ main.innerHTML = `<div class="empty"><h2>Aucune journée</h2><p>Commencez d'abord une journée dans l'onglet Journée.</p></div>`; return; }
+  const d = days[cur], c = chg(d);
+  main.innerHTML = `
+  <div class="hero" id="c-hero">
+    <div class="lbl">Bénéfice du change aujourd'hui</div>
+    <div class="big" id="c-benef">0 FC</div>
+    <div class="usd" id="c-benef-usd"></div>
+    <div class="prog" aria-hidden="true"><span id="c-bar" style="width:0%"></span></div>
+    <div class="prog-t" id="c-prog"></div>
+    <div class="hero-grid">
+      <div>Dollars achetés<b id="c-ach"></b></div>
+      <div>Dollars vendus<b id="c-ven"></b></div>
+      <div>Dollars à revendre<b id="c-stock"></b></div>
+      <div>Bénéfice qui attend<b id="c-attend"></b></div>
+    </div>
+  </div>
+
+  <section class="block">
+    <div class="block-head"><h2>Taux et objectif</h2></div>
+    <div class="row mm">
+      <label class="f">Taux d'achat aux clients (FC)<input class="n" inputmode="decimal" data-p="change.tauxAchat" value="${iv(c.tauxAchat)}" placeholder="${DEF_ACHAT}"></label>
+      <label class="f">Taux de revente (FC)<input class="n" inputmode="decimal" data-p="taux" value="${iv(d.taux)}" placeholder="${DEF_TAUX}"></label>
+      <label class="f" style="grid-column:1/-1">Objectif du jour (dollars à acheter)<input class="n" inputmode="decimal" data-p="change.objectif" value="${iv(c.objectif)}" placeholder="${DEF_OBJ}"></label>
+      <div class="out"><span>Bénéfice sur chaque 100 $</span><span class="num" id="c-par100"></span></div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>Achats aux clients</h2><span class="num" id="c-t-ach"></span></div>
+    <div class="hint">Le client apporte des dollars, vous lui donnez des francs. Laissez le taux vide pour utiliser le taux d'achat.</div>
+    ${c.achats.map((r,i)=>`
+      <div class="row mm">
+        <label class="f">Dollars reçus ($)<input class="n" inputmode="decimal" data-p="change.achats.${i}.usd" value="${iv(r.usd)}" placeholder="0"></label>
+        <label class="f">Taux (FC)<input class="n" inputmode="decimal" data-p="change.achats.${i}.taux" value="${iv(r.taux)}" placeholder="${esc(fmt(n(c.tauxAchat)||DEF_ACHAT))}"></label>
+        <div class="out"><span id="ca-${i}"></span><button class="del" data-cdel="achats.${i}" aria-label="Retirer cet achat">✕</button></div>
+      </div>`).join("")}
+    <button class="add" data-cadd="achats">+ Ajouter un achat</button>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>Ventes de dollars</h2><span class="num" id="c-t-ven"></span></div>
+    <div class="hint">Quand vous allez revendre vos dollars, ou quand un client achète des dollars. Laissez le taux vide pour utiliser le taux de revente.</div>
+    ${c.ventes.map((r,i)=>`
+      <div class="row mm">
+        <label class="f" style="grid-column:1/-1">Où / à qui<input class="t" data-p="change.ventes.${i}.lieu" value="${esc(r.lieu)}" placeholder="Ex. bureau de change"></label>
+        <label class="f">Dollars vendus ($)<input class="n" inputmode="decimal" data-p="change.ventes.${i}.usd" value="${iv(r.usd)}" placeholder="0"></label>
+        <label class="f">Taux obtenu (FC)<input class="n" inputmode="decimal" data-p="change.ventes.${i}.taux" value="${iv(r.taux)}" placeholder="${esc(fmt(n(d.taux)||DEF_TAUX))}"></label>
+        <div class="out"><span id="cv-${i}"></span><button class="del" data-cdel="ventes.${i}" aria-label="Retirer cette vente">✕</button></div>
+      </div>`).join("")}
+    <button class="add" data-cadd="ventes">+ Ajouter une vente</button>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>Retour vers la Journée</h2></div>
+    <div class="retour" id="c-retour"></div>
+  </section>`;
+  updateChange();
+}
+
+function updateChange(){
+  if(!cur || tab!=="change") return;
+  const d = days[cur], x = calcChange(d), $ = id=>document.getElementById(id);
+  const st = stockDollars(cur);
+  $("c-benef").textContent = (x.benef>0?"+":"") + fc(x.benef);
+  $("c-benef-usd").textContent = usd(x.benef/x.tR);
+  $("c-bar").style.width = x.pct.toFixed(0)+"%";
+  const reste = Math.max(0, x.obj - x.usdAch);
+  $("c-prog").textContent = reste>0
+    ? `Objectif : ${usd(x.obj)} → ${fc(x.objBenef)} · il reste ${usd(reste)} à acheter`
+    : `Objectif atteint : ${usd(x.usdAch)} achetés sur ${usd(x.obj)} 🎉`;
+  $("c-ach").textContent = usd(x.usdAch);
+  $("c-ven").textContent = usd(x.usdVen);
+  $("c-stock").textContent = usd(st);
+  $("c-attend").textContent = fc(Math.max(0,st)*(x.tR-x.tA));
+  $("c-par100").textContent = fc(100*(x.tR-x.tA));
+  $("c-t-ach").textContent = usd(x.usdAch);
+  $("c-t-ven").textContent = usd(x.usdVen);
+  x.ach.forEach((r,i)=>{ const e=$("ca-"+i); if(e) e.textContent = `Donné ${fc(r.fcDonne)} · bénéfice ${fc(r.benef)}`; });
+  x.ven.forEach((r,i)=>{ const e=$("cv-"+i); if(e) e.textContent = `Reçu ${fc(r.fcRecu)}` + (r.ecart? ` · ${r.ecart>0?"+":""}${fc(r.ecart)} par rapport au taux prévu`:""); });
+  $("c-retour").innerHTML = `Ce bénéfice de <b>${fc(x.benef)}</b> apparaît dans le bilan de la page Journée.<br>
+    <span class="hint" style="padding:0">Les dollars et les francs eux-mêmes sont déjà comptés dans « Espèces » quand vous comptez votre caisse : pensez à mettre à jour les espèces après vos achats et ventes.</span>`;
+}
+
+function renderHist(){
+  const all = sortedDates().slice().reverse();
+  if(!all.length){ main.innerHTML = `<div class="empty"><h2>Pas encore d'historique</h2><p>Les journées enregistrées apparaîtront ici.</p></div>`; return; }
+  const rows = all.map(dt=>{ const c=calc(days[dt]); return {dt, c}; });
+  const last = rows.slice(0,30).reverse();
+  const max = Math.max(1, ...last.map(r=>Math.abs(r.c.gain)));
+  const w = Math.max(300, last.length*22), h=120, mid=h/2, bw=14;
+  const bars = last.map((r,i)=>{ const bh = Math.abs(r.c.gain)/max*(mid-6); const x=i*22+4; const y = r.c.gain>=0 ? mid-bh : mid;
+    return `<rect x="${x}" y="${y}" width="${bw}" height="${Math.max(bh,1)}" rx="2" fill="${r.c.gain>=0?"var(--mala)":"var(--loss)"}"><title>${shortDate(r.dt)} : ${fc(r.c.gain)}</title></rect>`; }).join("");
+  const tot7 = rows.slice(0,7).reduce((a,r)=>a+r.c.gain,0);
+  const tot30 = rows.slice(0,30).reduce((a,r)=>a+r.c.gain,0);
+  const t = rows[0].c.t;
+  main.innerHTML = `
+  <div class="hero ${tot7<0?"loss":""}">
+    <div class="lbl">Gain des 7 dernières journées</div>
+    <div class="big">${(tot7>0?"+":"")+fc(tot7)}</div>
+    <div class="usd">${usd(tot7/t)}</div>
+    <div class="hero-grid">
+      <div>30 dernières journées<b>${(tot30>0?"+":"")+fc(tot30)}</b></div>
+      <div>Journées enregistrées<b>${rows.length}</b></div>
+    </div>
+  </div>
+  <section class="block">
+    <div class="block-head"><h2>Courbe du gain</h2><span class="hint" style="padding:0">30 dernières journées</span></div>
+    <div class="chart curve">${courbeGain(null, 30)}</div>
+  </section>
+  <section class="block">
+    <ul class="hist">${rows.map(r=>`<li><button data-open="${r.dt}">
+      <span class="d">${longDate(r.dt)}</span><span class="g ${r.c.gain<0?"neg":"pos"}">${(r.c.gain>0?"+":"")+fc(r.c.gain)}</span>
+      <span class="s">Total ${fc(r.c.total)}${fuiteDe(r.c)>0?` · <b class="neg">fuite ${fc(fuiteDe(r.c))}</b>`:""}</span><span class="s" style="text-align:right">${usd(r.c.gain/r.c.t)}</span>
+    </button></li>`).join("")}</ul>
+  </section>`;
+}
+
+function renderRegl(){
+  main.innerHTML = `
+  <section class="block">
+    <div class="block-head"><h2>Où sont gardées les données</h2></div>
+    <div class="hint">${mode==="compte" ? "Dans votre compte Claude : vous les retrouvez sur tous vos appareils." : "Dans ce téléphone seulement."}</div>
+  </section>
+  <section class="block">
+    <div class="block-head"><h2>Journée ouverte</h2></div>
+    <div class="set">
+      ${cur ? `<div>${longDate(cur)}</div><button class="ghost danger" data-act="deleteday">Supprimer cette journée</button>` : `<div class="hint" style="padding:0">Aucune journée ouverte.</div>`}
+    </div>
+  </section>
+  <section class="block">
+    <div class="block-head"><h2>Comment ça marche</h2></div>
+    <div class="hint" style="padding-bottom:14px">Chaque soir, touchez « Nouvelle journée » : la grille d'hier est recopiée avec le même taux et les mêmes lignes. Remplacez seulement les chiffres. Le solde d'hier se remplit tout seul avec le total général de la journée précédente, et le gain se calcule à mesure que vous tapez.</div>
+  </section>`;
+}
+
+// ---------- Nouvelle journée ----------
+function openNewDay(){
+  const all = sortedDates();
+  let def = today();
+  if(days[def]){ const last = all[all.length-1]; const [y,m,dd]=last.split("-").map(Number); const x=new Date(y,m-1,dd+1);
+    def = x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0"); }
+  const bg = document.createElement("div");
+  bg.className="sheet-bg";
+  bg.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="nd-t">
+    <h3 id="nd-t">Nouvelle journée</h3>
+    <p>${all.length ? "La grille de la journée précédente sera recopiée. Vous n'aurez qu'à remplacer les chiffres." : "Une grille vide sera créée avec vos services et réseaux."}</p>
+    <label class="f">Date<input class="t" type="date" id="nd-date" value="${def}"></label>
+    <div class="btns"><button class="ghost" id="nd-no">Annuler</button><button class="primary" id="nd-ok">Créer</button></div>
+  </div>`;
+  document.body.appendChild(bg);
+  const close=()=>bg.remove();
+  bg.addEventListener("click",e=>{ if(e.target===bg) close(); });
+  bg.querySelector("#nd-no").onclick=close;
+  bg.querySelector("#nd-ok").onclick=()=>{
+    const date = bg.querySelector("#nd-date").value; if(!date) return;
+    close();
+    if(days[date]){ cur=date; tab="jour"; render(); return; }
+    const p = prevDate(date) || (all.length? all[all.length-1] : null);
+    let nd;
+    if(p){ const src = JSON.parse(JSON.stringify(days[p]));
+      const sc = chg(src);
+      nd = { date, taux:src.taux, mm:src.mm, un:src.un, esp:src.esp, dettes:src.dettes, depenses:[], soldeHier:null,
+             change:{tauxAchat:sc.tauxAchat, objectif:sc.objectif, achats:[], ventes:[]} };
+    } else nd = blankDay(date);
+    days[date]=nd; cur=date; tab="jour"; render(); scheduleSave(date);
+  };
+}
+
+// ---------- Événements ----------
+function setPath(obj, path, val){ const k=path.split("."); let o=obj; for(let i=0;i<k.length-1;i++) o=o[k[i]]; o[k[k.length-1]]=val; }
+main.addEventListener("input", e=>{
+  const el=e.target, p=el.dataset.p; if(!p||!cur) return;
+  let v = el.value;
+  if(el.classList.contains("n")){ v = v.trim()==="" ? (p==="soldeHier"? null : 0) : n(v); }
+  setPath(days[cur], p, v);
+  update(); scheduleSave(cur);
+});
+main.addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  if(b.dataset.act==="newday") return openNewDay();
+  if(b.dataset.act==="deleteday"){
+    if(!confirm("Supprimer la journée du "+longDate(cur)+" ?")) return;
+    const d=cur; delete days[d]; persist(d);
+    const all=sortedDates(); cur = all.length? all[all.length-1] : null; tab="jour"; render(); return;
+  }
+  if(b.dataset.cadd){
+    const c = chg(days[cur]);
+    c[b.dataset.cadd].push(b.dataset.cadd==="achats" ? {usd:0, taux:0} : {lieu:"", usd:0, taux:0});
+    render(); scheduleSave(cur);
+    const ins = main.querySelectorAll(`[data-p^="change.${b.dataset.cadd}."][data-p$=".usd"]`); if(ins.length) ins[ins.length-1].focus();
+    return;
+  }
+  if(b.dataset.cdel){
+    const [k,i] = b.dataset.cdel.split(".");
+    if(!confirm("Retirer cette ligne ?")) return;
+    chg(days[cur])[k].splice(+i,1); render(); scheduleSave(cur); return;
+  }
+  if(b.dataset.open){ cur=b.dataset.open; tab="jour"; render(); window.scrollTo(0,0); return; }
+  if(b.dataset.add){
+    const k=b.dataset.add, d=days[cur];
+    d[k].push(k==="mm"?{label:"Nouveau service",fc:0,usd:0}: k==="un"?{label:"Nouveau réseau",qte:0,prix:28.4}: k==="dettes"?{client:"",montant:0}:{motif:"",montant:0});
+    render(); scheduleSave(cur); return;
+  }
+  if(b.dataset.del){
+    const [k,i]=b.dataset.del.split("."), d=days[cur], item=d[k][+i];
+    const name = item.label||item.client||item.motif||"cette ligne";
+    if(!confirm("Retirer « "+name+" » ?")) return;
+    d[k].splice(+i,1); render(); scheduleSave(cur);
+  }
+});
+document.getElementById("prev").onclick=()=>{ const a=sortedDates(), i=a.indexOf(cur); if(i>0){cur=a[i-1]; render();} };
+document.getElementById("next").onclick=()=>{ const a=sortedDates(), i=a.indexOf(cur); if(i<a.length-1){cur=a[i+1]; render();} };
+document.querySelectorAll(".tabs button").forEach(b=> b.onclick=()=>{ tab=b.dataset.tab; render(); window.scrollTo(0,0); });
+
+// ---------- Démarrage ----------
+(async function(){
+  days = lsLoad();
+  if(nettoyerDoubles().length) lsSave();
+  let all = sortedDates(); cur = all.length ? all[all.length-1] : null; render();
+  setStatus("Chargement…");
+  await initStore();
+  for(const k of nettoyerDoubles()) persist(k);
+  all = sortedDates();
+  if(!cur || !days[cur]) cur = all.length ? all[all.length-1] : null;
+  render();
+  setStatus(mode==="compte" ? "Synchronisé" : "Dans ce téléphone");
+})();
+})();
+</script>
+<script>
+if("serviceWorker" in navigator && location.protocol==="https:"){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
+</script>
+</body>
+</html>
