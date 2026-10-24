@@ -1,0 +1,71 @@
+name: Fabriquer APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['index.html']
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prendre les fichiers du dépôt
+        uses: actions/checkout@v4
+
+      - name: Installer Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Installer Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Préparer le projet Android
+        run: |
+          mkdir app && cd app
+          npm init -y
+          npm install @capacitor/core@6.2.0 @capacitor/cli@6.2.0 @capacitor/android@6.2.0
+          mkdir www
+          cp ../index.html www/index.html
+          npx cap init "Shop Rédemption" com.michel.shopredemption --web-dir www
+          npx cap add android
+          for d in android/app/src/main/res/mipmap-*dpi; do
+            cp ../shop-192.png "$d/ic_launcher.png"
+            cp ../shop-192.png "$d/ic_launcher_round.png"
+          done
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
+          sed -i "s/versionCode 1$/versionCode ${{ github.run_number }}/" android/app/build.gradle
+          sed -i "s/versionName \"1.0\"/versionName \"1.${{ github.run_number }}\"/" android/app/build.gradle
+
+      - name: Construire l'APK
+        run: |
+          cd app/android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Signer l'APK
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.KS_PASS }}
+        run: |
+          echo "$KEYSTORE_B64" | tr -d ' \r\n' | base64 -d > cle.jks
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/zipalign" -p -f 4 app/android/app/build/outputs/apk/release/app-release-unsigned.apk aligne.apk
+          "$BT/apksigner" sign --ks cle.jks --ks-pass env:KS_PASS --ks-key-alias shop --key-pass env:KS_PASS --out shop-redemption.apk aligne.apk
+          "$BT/apksigner" verify shop-redemption.apk
+          rm -f cle.jks
+
+      - name: Publier l'APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v1.${{ github.run_number }}" shop-redemption.apk \
+            --title "Shop Rédemption 1.${{ github.run_number }}" \
+            --notes "APK Android fabriqué automatiquement."
