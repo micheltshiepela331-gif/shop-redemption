@@ -48,7 +48,7 @@ jobs:
         run: |
           cd app/android
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon
+          ./gradlew assembleDebug --no-daemon
 
       - name: Signer l'APK
         env:
@@ -57,7 +57,7 @@ jobs:
         run: |
           echo "$KEYSTORE_B64" | tr -d ' \r\n' | base64 -d > cle.jks
           BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
-          "$BT/zipalign" -p -f 4 app/android/app/build/outputs/apk/release/app-release-unsigned.apk aligne.apk
+          "$BT/zipalign" -p -f 4 app/android/app/build/outputs/apk/debug/app-debug.apk aligne.apk
           "$BT/apksigner" sign --ks cle.jks --ks-pass env:KS_PASS --ks-key-alias shop --key-pass env:KS_PASS --out shop-redemption.apk aligne.apk
           "$BT/apksigner" verify shop-redemption.apk
           rm -f cle.jks
